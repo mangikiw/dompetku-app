@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Dompet</title>
+
+  <!-- CSS Utama -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Font Awesome (untuk icon) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff">
+<body>
+  <div id="app-dompet">
+    <h1>Dompet</h1>
+
+    <!-- Tombol Tambah -->
+    <button id="tombolTambah" class="tambah-btn">
+      <i class="fas fa-plus"></i> Tambah Dompet
+    </button>
+
+    <!-- Form Tambah Dompet -->
+    <form id="formDompet" class="form-dompet" style="display: none;">
+      <input type="text" id="namaDompet" placeholder="Nama Dompet" required />
+      <input type="number" id="saldoDompet" placeholder="Saldo Awal" required />
+      <button type="submit">Simpan</button>
+    </form>
+
+    <!-- Tabel Daftar Dompet -->
+    <div id="dompetContainer" class="dompet-container">
+      <table id="tambahdompet">
+        <thead>
+          <tr>
+            <th>Dompet</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody id="tabel-body">
+          <!-- Baris dompet ditambahkan lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Detail Dompet -->
+<div id="detailDompet" style="display: none; margin-top: 90px; border: 1px solid #ccc; padding: 20px; border-radius: 8px;">
+  <h3 id="detailNama"></h3>
+  <p><strong>Saldo:</strong> <span id="detailSaldo"></span></p>
+  
+ <!-- Form Tarik Saldo -->
+<form id="formTarikDompet" style="margin-top: 15px;">
+  <input type="number" id="jumlahTarikDompet" placeholder="Jumlah Tarik" required style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+  <input type="text" id="keteranganTarikDompet" placeholder="Keterangan (opsional)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+  <button type="submit" style="background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+    <i class="fas fa-arrow-down"></i> Tarik Saldo
+  </button>
+</form>
+  
+  <br /><br />
+  <button onclick="kembaliKeDaftar()">← Kembali</button>
+</div>
+    <!-- Navigasi Bawah -->
+    <nav id="bottom-nav">
+      <button onclick="location.href='bank.html'">
+        <i class="fas fa-bank"></i><br/>Bank Pusat
+      </button>
+      <button onclick="location.href='alokasi.html'">
+        <i class="fas fa-exchange-alt"></i><br/>Alokasi
+      </button>
+      <button onclick="location.href='dompet.html'">
+        <i class="fas fa-suitcase"></i><br/>Dompet
+      </button>
+      <button onclick="location.href='riwayat.html'">
+        <i class="fas fa-history"></i><br/>Riwayat
+      </button>
+    </nav>
+  </div>
+
+  <!-- Script JS -->
+  <script>
+    document.getElementById('tombolTambah').addEventListener('click', function () {
+  const form = document.getElementById('formDompet');
+  const table = document.getElementById('tambahdompet');
+  const isFormHidden = form.style.display === 'none' || form.style.display === '';
+
+  form.style.display = isFormHidden ? 'block' : 'none';
+  table.style.marginTop = isFormHidden ? '13px' : '90px';
+});
+
+const form = document.getElementById("formDompet");
+const inputNama = document.getElementById("namaDompet");
+const inputSaldo = document.getElementById("saldoDompet");
+const inputKeteranganTarikDompet = document.getElementById("keteranganTarikDompet");
+let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+
+// Form tarik dompet
+const formTarikDompet = document.getElementById("formTarikDompet");
+const inputJumlahTarikDompet = document.getElementById("jumlahTarikDompet");
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const nama = inputNama.value.trim();
+  const saldo = parseFloat(inputSaldo.value);
+
+  if (nama && !isNaN(saldo)) {
+    daftarDompet.push({ nama, saldo });
+    localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+
+    const tbody = document.getElementById('tabel-body');
+    const index = daftarDompet.length - 1;
+    const newRow = document.createElement('tr');
+
+    newRow.innerHTML = `
+      <td>${nama}</td>
+      <td>Rp ${parseInt(saldo).toLocaleString()}</td>
+    `;
+
+    newRow.style.cursor = "pointer";
+    // Perbaikan: Gunakan fungsi anonim untuk memastikan index yang benar
+    newRow.addEventListener("click", function () {
+      tampilkanDetailDompet(index);
+    });
+
+    tbody.appendChild(newRow);
+
+    form.reset();
+    form.style.display = 'none';
+    document.getElementById('tambahdompet').style.marginTop = '90px';
+  }
+});
+
+// Submit form tarik dompet
+formTarikDompet.addEventListener("submit", function (e) {
+  e.preventDefault();
+  
+  const index = parseInt(formTarikDompet.dataset.dompetIndex);
+  const jumlah = parseFloat(inputJumlahTarikDompet.value);
+  const keterangan = inputKeteranganTarikDompet.value.trim() || "Tarik dana";
+  
+  if (!isNaN(jumlah) && jumlah > 0) {
+    if (jumlah > daftarDompet[index].saldo) {
+      alert("Saldo tidak mencukupi!");
+      return;
+    }
+    
+    // Kurangi saldo dompet
+    daftarDompet[index].saldo -= jumlah;
+    localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+    
+    // Update tampilan saldo
+    document.getElementById("detailSaldo").textContent = "Rp " + parseInt(daftarDompet[index].saldo).toLocaleString();
+    
+    // Simpan ke riwayat dengan detail
+    const detailTarik = {
+      sumber: `Dompet ${daftarDompet[index].nama}`,
+      target: "Luar Sistem",
+      indexDompet: index,
+      namaDompet: daftarDompet[index].nama
+    };
+    simpanRiwayatDompet("Penarikan", `${keterangan}`, jumlah, detailTarik);
+    
+    // Update pengeluaran
+    updatePengeluaranDompet(jumlah);
+    
+    alert(`Berhasil menarik Rp ${jumlah.toLocaleString()}`);
+    
+    // Reset form
+    formTarikDompet.reset();
+  }
+});
+
+window.addEventListener("DOMContentLoaded", function () {
+  const tbody = document.getElementById('tabel-body');
+  tbody.innerHTML = ""; // Kosongkan dulu
+  
+  daftarDompet.forEach((dompet, index) => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${dompet.nama}</td>
+      <td>Rp ${parseInt(dompet.saldo).toLocaleString()}</td>
+    `;
+
+    row.style.cursor = "pointer";
+    // Perbaikan: Gunakan fungsi anonim untuk memastikan index yang benar
+    row.addEventListener("click", function () {
+      tampilkanDetailDompet(index);
+    });
+
+    tbody.appendChild(row);
+  });
+});
+
+function tampilkanDetailDompet(index) {
+  const daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+  const dompet = daftarDompet[index];
+  if (!dompet) return;
+
+  document.getElementById("detailNama").textContent = dompet.nama;
+  document.getElementById("detailSaldo").textContent = "Rp " + parseInt(dompet.saldo).toLocaleString();
+  
+  // Simpan index ke sebuah variable global atau hidden input
+  document.getElementById("formTarikDompet").dataset.dompetIndex = index;
+
+  document.getElementById("tambahdompet").style.display = "none";
+  document.getElementById("detailDompet").style.display = "block";
+}
+
+function kembaliKeDaftar() {
+  document.getElementById("detailDompet").style.display = "none";
+  document.getElementById("tambahdompet").style.display = "table";
+}
+
+// Fungsi untuk menyimpan riwayat transaksi dompet dengan detail
+function simpanRiwayatDompet(tipe, keterangan, jumlah, detail = {}) {
+  let riwayat = JSON.parse(localStorage.getItem("riwayatTransaksi")) || [];
+  
+  riwayat.push({
+    tipe: tipe,
+    keterangan: keterangan,
+    jumlah: jumlah,
+    warna: "keluar",
+    tanggal: new Date().toLocaleDateString("id-ID"),
+    detail: detail // Tambahkan detail sumber/target
+  });
+  
+  localStorage.setItem("riwayatTransaksi", JSON.stringify(riwayat));
+}
+
+// Fungsi untuk update pengeluaran
+function updatePengeluaranDompet(jumlah) {
+  // Simpan pengeluaran hari ini
+  let pengeluaranHariIni = JSON.parse(localStorage.getItem("pengeluaranHariIni")) || {
+    tanggal: new Date().toDateString(),
+    total: 0
+  };
+  
+  let pengeluaranBulanIni = JSON.parse(localStorage.getItem("pengeluaranBulanIni")) || {
+    bulan: new Date().getMonth(),
+    tahun: new Date().getFullYear(),
+    total: 0
+  };
+  
+  const today = new Date();
+  
+  // Reset jika beda hari
+  if (pengeluaranHariIni.tanggal !== today.toDateString()) {
+    pengeluaranHariIni = {
+      tanggal: today.toDateString(),
+      total: 0
+    };
+  }
+  
+  // Reset jika beda bulan
+  if (pengeluaranBulanIni.bulan !== today.getMonth() || pengeluaranBulanIni.tahun !== today.getFullYear()) {
+    pengeluaranBulanIni = {
+      bulan: today.getMonth(),
+      tahun: today.getFullYear(),
+      total: 0
+    };
+  }
+  
+  // Tambahkan pengeluaran
+  pengeluaranHariIni.total += jumlah;
+  pengeluaranBulanIni.total += jumlah;
+  
+  // Simpan kembali
+  localStorage.setItem("pengeluaranHariIni", JSON.stringify(pengeluaranHariIni));
+  localStorage.setItem("pengeluaranBulanIni", JSON.stringify(pengeluaranBulanIni));
+}
+  </script>
+  <script>
+  // Register service worker (opsional)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(function(error) {
+          console.log('SW registration failed:', error);
+        });
+    });
+  }
+</script>
+</body>
+</html>
