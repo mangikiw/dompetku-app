@@ -1,8 +1,0 @@
-{
-  "name": "Aplikasi Keuangan Pribadi",
-  "short_name": "Keuangan",
-  "start_url": "bank.html",
-  "display": "standalone",
-  "background_color": "#f8f9fa",
-  "theme_color": "#007bff"
-}
