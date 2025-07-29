@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cuanin - Aplikasi Keuangan Mahasiswa</title>
+
+  <!-- File CSS utama -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Untuk icon jika mau pakai (opsional) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+</head>
+  <!-- meta tags lainnya -->
+  <meta http-equiv="refresh" content="0; url=bank.html" />
+
+<body>
+  <script>
+  // Redirect otomatis ke bank.html
+  window.location.href = "bank.html";
+</script>
+
+  <!-- Wrapper utama aplikasi -->
+  <div id="app">
+
+    <!-- ========================= -->
+    <!-- 👇 SECTION: KONTEN DINAMIS -->
+    <!-- Konten tiap halaman akan ditampilkan di sini -->
+    <!-- Akan diganti via JS berdasarkan menu navigasi yang ditekan -->
+    <!-- ========================= -->
+    <div id="page-content">
+      <!-- Default halaman: Pemasukan -->
+      <h2>Tambah Pemasukan</h2>
+      <!-- kamu bisa load file HTML eksternal via JS nanti -->
+    </div>
+        <!-- ========================= -->
+    <!-- 👇 SECTION: NAVIGASI BAWAH -->
+    <!-- ========================= -->
+    <nav id="bottom-nav">
+      <button onclick="location.href='index.html'">
+        <i class="fas fa-bank"></i><br/>
+        Bank Pusat
+      </button>
+      <button onclick="location.href='alokasi.html'">
+        <i class="fas fa-exchange-alt"></i><br/>
+        Alokasi
+      </button>
+      <button onclick="location.href='dompet.html'">
+        <i class="fas fa-suitcase"></i><br/>
+        Dompet
+      </button>
+      <button onclick="location.href='riwayat.html'">
+        <i class="fas fa-history"></i><br/>
+        Riwayat
+      </button>
+    </nav>
+  </div>
+
+  <!-- File JS utama -->
+  <script src="script.js"></script>
+  <script>
+  // Register service worker (opsional)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(function(error) {
+          console.log('SW registration failed:', error);
+        });
+    });
+  }
+</script>
+</body>
+</html>
