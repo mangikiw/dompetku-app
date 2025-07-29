@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Riwayat Transaksi</title>
+
+  <!-- CSS Utama -->
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .riwayat-container {
+  margin-top: 0px;
+  padding: 20px;
+}
+
+.filter-container {
+  margin-top: 90px;
+  margin-bottom: 0px;
+  padding: 15px;
+  border-radius: 8px;
+}
+#filterTipe{
+  margin-bottom: 10px;
+}
+.filter-container select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 0px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.riwayat-item {
+  border-bottom: 1px solid #ccc;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.riwayat-item:last-child {
+  border-bottom: none;
+}
+
+/* Garis kiri untuk jenis transaksi */
+.riwayat-item.masuk {
+  border-left: 4px solid #28a745;
+}
+
+.riwayat-item.keluar {
+  border-left: 4px solid #dc3545;
+}
+
+.riwayat-item.alokasi {
+  border-left: 4px solid #007bff;
+}
+
+
+.tipe {
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ketjum{
+    display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+}
+.jumlah {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+.jumlah.masuk {
+  color: #28a745;
+}
+
+.jumlah.keluar {
+  color: #dc3545;
+}
+
+.tanggal {
+  font-size: 12px;
+  color: #666;
+  margin-top: 0;
+}
+
+.keterangan {
+  margin: 5px 0;
+}
+
+/* Icon actions */
+.action-icons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+.action-icons i {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.action-icons i:hover {
+  background-color: #e9ecef;
+}
+
+.edit-icon {
+  color: #007bff;
+}
+
+.delete-icon {
+  color: #dc3545;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Form Edit */
+.edit-form {
+  display: none;
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.edit-form input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.edit-form button {
+  padding: 8px 15px;
+  margin-right: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-form .save-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.edit-form .cancel-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* Tambahkan di style tag atau style.css */
+.fixed-body {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.scrollable-content {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.riwayat-scroll-container {
+  max-height: 600px; /* Atur tinggi tetap */
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+/* Untuk item riwayat */
+.riwayat-item {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+}
+
+.riwayat-item:last-child {
+  border-bottom: none;
+}
+  </style>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="fixed-body">
+  <div class="scrollable-content">
+    <div id="app-riwayat" style="padding: 20px;">
+      <h1>Riwayat Transaksi</h1>
+      
+      <!-- Filter Container -->
+      <div class="filter-container">
+        <select id="filterTipe">
+          <option value="semua">Semua Transaksi</option>
+          <option value="masuk">Pemasukan</option>
+          <option value="keluar">Pengeluaran</option>
+        </select>
+        <select id="filterJenis">
+          <option value="semua">Semua Jenis</option>
+          <option value="Pemasukan">Pemasukan</option>
+          <option value="Alokasi">Alokasi</option>
+          <option value="Penarikan">Penarikan</option>
+        </select>
+      </div>
+
+      <!-- Container Riwayat dengan Scroll -->
+      <div class="riwayat-scroll-container">
+        <div class="riwayat-container" id="daftarRiwayat">
+          <!-- Isi riwayat dimuat lewat JavaScript -->
+        </div>
+      </div>
+
+      <!-- Navigasi Bawah -->
+      <nav id="bottom-nav" style="position: fixed; bottom: 0; left: 0; right: 0;">
+        <button onclick="location.href='index.html'"><i class="fas fa-bank"></i><br/>Bank Pusat</button>
+        <button onclick="location.href='alokasi.html'"><i class="fas fa-exchange-alt"></i><br/>Alokasi</button>
+        <button onclick="location.href='dompet.html'"><i class="fas fa-suitcase"></i><br/>Dompet</button>
+        <button onclick="location.href='riwayat.html'"><i class="fas fa-history"></i><br/>Riwayat</button>
+      </nav>
+    </div>
+  </div>
+</body>
+
+  <script>
+   const daftarRiwayat = document.getElementById("daftarRiwayat");
+    const filterTipe = document.getElementById("filterTipe");
+    const filterJenis = document.getElementById("filterJenis");
+
+    // Ambil data riwayat dari localStorage
+    function ambilRiwayat() {
+      return JSON.parse(localStorage.getItem("riwayatTransaksi")) || [];
+    }
+
+    // Simpan data riwayat ke localStorage
+    function simpanRiwayat(riwayat) {
+      localStorage.setItem("riwayatTransaksi", JSON.stringify(riwayat));
+    }
+
+    // Tampilkan riwayat dengan filter
+   function tampilkanRiwayat() {
+  const daftarRiwayat = document.getElementById("daftarRiwayat");
+  daftarRiwayat.innerHTML = "";
+      const riwayat = ambilRiwayat();
+      const tipeFilter = filterTipe.value;
+      const jenisFilter = filterJenis.value;
+
+      if (riwayat.length === 0) {
+        daftarRiwayat.innerHTML = "<p style='text-align: center; color: #666;'>Tidak ada riwayat transaksi</p>";
+        return;
+      }
+
+      // Filter data
+      let riwayatFiltered = [...riwayat];
+
+      // Filter berdasarkan tipe (masuk/keluar)
+      if (tipeFilter !== "semua") {
+        riwayatFiltered = riwayatFiltered.filter(item => 
+          item.warna === tipeFilter
+        );
+      }
+
+      // Filter berdasarkan jenis transaksi
+      if (jenisFilter !== "semua") {
+        riwayatFiltered = riwayatFiltered.filter(item => 
+          item.tipe === jenisFilter
+        );
+      }
+
+      if (riwayatFiltered.length === 0) {
+        daftarRiwayat.innerHTML = "<p style='text-align: center; color: #666;'>Tidak ada transaksi yang sesuai filter</p>";
+        return;
+      }
+
+      // Tampilkan riwayat yang sudah difilter (dari yang terbaru)
+      riwayatFiltered.reverse().forEach((data, index) => {
+        const actualIndex = riwayat.length - 1 - index; // Index sebenarnya di array asli
+        const item = document.createElement("div");
+        item.className = `riwayat-item ${data.warna}`;
+        item.dataset.index = actualIndex; // Simpan index sebenarnya
+        
+        item.innerHTML = `
+          <div class="tanggal">${data.tanggal}</div>
+          <div class="tipe">
+            ${data.tipe}
+            <div class="action-icons">
+           <i class="fas fa-edit edit-icon" onclick="document.getElementById('editForm-${actualIndex}').style.display='block'; event.stopPropagation();"></i>
+            <i class="fas fa-trash delete-icon" data-index="${actualIndex}" data-action="delete"></i>
+          </div>
+          </div>
+          <div class="ketjum">
+            <div class="keterangan">${data.keterangan}</div>
+            <div class="jumlah ${data.warna}">Rp ${parseInt(data.jumlah).toLocaleString()}</div>
+          </div>
+          <!-- Form Edit (hidden by default) -->
+          <div class="edit-form" id="editForm-${actualIndex}">
+            <input type="text" id="editKeterangan-${actualIndex}" value="${data.keterangan}" placeholder="Keterangan">
+            <input type="number" id="editJumlah-${actualIndex}" value="${data.jumlah}" placeholder="Jumlah">
+            <button class="save-btn" onclick="simpanEdit(${actualIndex})">Simpan</button>
+            <button class="cancel-btn" onclick="batalEdit(${actualIndex})">Batal</button>
+          </div>
+        `;
+        daftarRiwayat.appendChild(item);
+      });
+    }
+
+   // Fungsi Edit Riwayat - versi simpel
+function editRiwayat(index) {
+  console.log("Edit clicked, index:", index); // Debug
+  const editForm = document.getElementById(`editForm-${index}`);
+  if (editForm) {
+    if (editForm.style.display === 'none' || editForm.style.display === '') {
+      editForm.style.display = 'block';
+    } else {
+      editForm.style.display = 'none';
+    }
+  }
+  return false;
+}
+
+ // Fungsi Simpan Edit (GANTI YANG LAMA DENGAN INI)
+function simpanEdit(index) {
+  const editKeterangan = document.getElementById(`editKeterangan-${index}`);
+  const editJumlah = document.getElementById(`editJumlah-${index}`);
+  
+  const keterangan = editKeterangan.value.trim();
+  const jumlahBaru = parseFloat(editJumlah.value);
+  
+  if (keterangan && !isNaN(jumlahBaru) && jumlahBaru > 0) {
+    let riwayat = ambilRiwayat();
+    const dataLama = {...riwayat[index]}; // Simpan data lama
+    const jumlahLama = dataLama.jumlah;
+    
+    // Update data riwayat
+    riwayat[index].keterangan = keterangan;
+    riwayat[index].jumlah = jumlahBaru;
+    
+    simpanRiwayat(riwayat);
+    
+    // Update sumber dan target berdasarkan jenis transaksi
+    updateSumberTarget(dataLama, jumlahLama, jumlahBaru);
+    
+    tampilkanRiwayat();
+    alert("Riwayat berhasil diupdate!");
+  } else {
+    alert("Mohon isi keterangan dan jumlah dengan benar!");
+  }
+}
+
+// Fungsi Update Sumber dan Target saat Edit (TAMBAHKAN INI)
+function updateSumberTarget(dataLama, jumlahLama, jumlahBaru) {
+  const perbedaan = jumlahBaru - jumlahLama; // Bisa positif atau negatif
+  const tipe = dataLama.tipe;
+  const detail = dataLama.detail || {};
+  
+  if (tipe === "Alokasi") {
+    // Update bank dan dompet
+    let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+    let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+    
+    // Update dompet
+    let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+    
+    if (detail.indexDompet !== undefined && daftarDompet[detail.indexDompet]) {
+      if (perbedaan > 0) {
+        // Jumlah bertambah: kurangi bank lagi, tambah dompet lagi
+        totalSaldo -= perbedaan; // Kurangi bank lebih banyak
+        daftarDompet[detail.indexDompet].saldo += perbedaan; // Tambah dompet lebih banyak
+      } else {
+        // Jumlah berkurang: tambah bank, kurangi dompet
+        totalSaldo -= perbedaan; // Tambah bank
+        daftarDompet[detail.indexDompet].saldo += perbedaan; // Kurangi dompet
+      }
+      
+      // Update saldo bank
+      dataBank = [{ keterangan: "Update Alokasi", dana: totalSaldo }];
+      localStorage.setItem("dataBank", JSON.stringify(dataBank));
+      
+      // Update dompet
+      localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+      
+      // Update tampilan bank
+      const saldoBankEl = document.getElementById("saldoBank");
+      if (saldoBankEl) {
+        saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+      }
+    }
+    
+  } else if (tipe === "Pemasukan") {
+    // Update hanya bank
+    let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+    let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+    
+    totalSaldo += perbedaan; // Tambahkan perbedaan
+    
+    // Update saldo bank
+    dataBank = [{ keterangan: "Update Pemasukan", dana: totalSaldo }];
+    localStorage.setItem("dataBank", JSON.stringify(dataBank));
+    
+    // Update tampilan bank
+    const saldoBankEl = document.getElementById("saldoBank");
+    if (saldoBankEl) {
+      saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+    }
+    
+  } else if (tipe === "Penarikan") {
+    // Update sumber penarikan (bank atau dompet)
+    if (detail.sumber && detail.sumber.includes("Bank")) {
+      // Penarikan dari bank
+      let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+      let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+      
+      totalSaldo += perbedaan; // Tambahkan perbedaan
+      
+      // Update saldo bank
+      dataBank = [{ keterangan: "Update Penarikan", dana: totalSaldo }];
+      localStorage.setItem("dataBank", JSON.stringify(dataBank));
+      
+      // Update tampilan bank
+      const saldoBankEl = document.getElementById("saldoBank");
+      if (saldoBankEl) {
+        saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+      }
+    } else if (detail.indexDompet !== undefined) {
+      // Penarikan dari dompet
+      let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+      
+      if (daftarDompet[detail.indexDompet]) {
+        daftarDompet[detail.indexDompet].saldo -= perbedaan; // Balikkan perbedaan
+        localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+      }
+    }
+    
+    // Update pengeluaran jika jumlah berubah
+    if (perbedaan !== 0) {
+      updatePengeluaranEdit(perbedaan);
+    }
+  }
+}
+
+// Fungsi Update Pengeluaran saat Edit (TAMBAHKAN INI)
+function updatePengeluaranEdit(perbedaan) {
+  // Simpan pengeluaran hari ini
+  let pengeluaranHariIni = JSON.parse(localStorage.getItem("pengeluaranHariIni")) || {
+    tanggal: new Date().toDateString(),
+    total: 0
+  };
+  
+  let pengeluaranBulanIni = JSON.parse(localStorage.getItem("pengeluaranBulanIni")) || {
+    bulan: new Date().getMonth(),
+    tahun: new Date().getFullYear(),
+    total: 0
+  };
+  
+  const today = new Date();
+  
+  // Reset jika beda hari
+  if (pengeluaranHariIni.tanggal !== today.toDateString()) {
+    pengeluaranHariIni = {
+      tanggal: today.toDateString(),
+      total: 0
+    };
+  }
+  
+  // Reset jika beda bulan
+  if (pengeluaranBulanIni.bulan !== today.getMonth() || pengeluaranBulanIni.tahun !== today.getFullYear()) {
+    pengeluaranBulanIni = {
+      bulan: today.getMonth(),
+      tahun: today.getFullYear(),
+      total: 0
+    };
+  }
+  
+  // Update pengeluaran
+  pengeluaranHariIni.total += perbedaan;
+  pengeluaranBulanIni.total += perbedaan;
+  
+  // Simpan kembali
+  localStorage.setItem("pengeluaranHariIni", JSON.stringify(pengeluaranHariIni));
+  localStorage.setItem("pengeluaranBulanIni", JSON.stringify(pengeluaranBulanIni));
+  
+  // Update tampilan pengeluaran
+  const pengeluaranHariEl = document.getElementById('pengeluaranHari');
+  const pengeluaranBulanEl = document.getElementById('pengeluaranBulan');
+  
+  if (pengeluaranHariEl) {
+    pengeluaranHariEl.textContent = "Rp " + parseInt(pengeluaranHariIni.total).toLocaleString();
+  }
+  if (pengeluaranBulanEl) {
+    pengeluaranBulanEl.textContent = "Rp " + parseInt(pengeluaranBulanIni.total).toLocaleString();
+  }
+}
+
+    // Fungsi Batal Edit
+    function batalEdit(index) {
+      const editForm = document.getElementById(`editForm-${index}`);
+      if (editForm) {
+        editForm.style.display = 'none';
+      }
+    }
+
+    // Fungsi Hapus Riwayat
+    function hapusRiwayat(index) {
+      if (confirm("Yakin ingin menghapus riwayat ini? Dana akan dikembalikan ke sumber asal.")) {
+        let riwayat = ambilRiwayat();
+        const dataDihapus = riwayat[index];
+        
+        // Hapus dari array
+        riwayat.splice(index, 1);
+        simpanRiwayat(riwayat);
+        
+        // Kembalikan dana ke sumber asal
+        kembalikanDana(dataDihapus);
+        
+        tampilkanRiwayat();
+        alert("Riwayat berhasil dihapus dan dana telah dikembalikan!");
+      }
+    }
+
+    // Fungsi Kembalikan Dana ke Sumber Asal
+function kembalikanDana(data) {
+  const tipe = data.tipe;
+  const jumlah = data.jumlah;
+  const detail = data.detail || {};
+  
+  if (tipe === "Pemasukan") {
+    // Kurangi dari bank
+    let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+    let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+    totalSaldo -= jumlah;
+    
+    // Update saldo bank
+    dataBank = [{ keterangan: "Penghapusan Riwayat", dana: totalSaldo }];
+    localStorage.setItem("dataBank", JSON.stringify(dataBank));
+    
+  } else if (tipe === "Alokasi") {
+    // Kembalikan ke bank, kurangi dari dompet
+    let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+    let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+    totalSaldo += jumlah;
+    
+    // Update saldo bank
+    dataBank = [{ keterangan: "Pengembalian Alokasi", dana: totalSaldo }];
+    localStorage.setItem("dataBank", JSON.stringify(dataBank));
+    
+    // Kurangi dari dompet yang bersangkutan
+    let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+    if (detail.indexDompet !== undefined && daftarDompet[detail.indexDompet]) {
+      daftarDompet[detail.indexDompet].saldo -= jumlah;
+      localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+    }
+    
+  } else if (tipe === "Penarikan") {
+    // Tambahkan kembali ke sumber (bank atau dompet)
+    if (detail.sumber && detail.sumber.includes("Bank")) {
+      // Kembalikan ke bank
+      let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+      let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+      totalSaldo += jumlah;
+      
+      // Update saldo bank
+      dataBank = [{ keterangan: "Pengembalian Penarikan", dana: totalSaldo }];
+      localStorage.setItem("dataBank", JSON.stringify(dataBank));
+    } else if (detail.indexDompet !== undefined) {
+      // Kembalikan ke dompet
+      let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+      if (daftarDompet[detail.indexDompet]) {
+        daftarDompet[detail.indexDompet].saldo += jumlah;
+        localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+      }
+    }
+  }
+  
+  // Update pengeluaran jika perlu
+  if (data.warna === "keluar") {
+    updatePengeluaranHapus(jumlah);
+  }
+}
+
+    // Fungsi Update Pengeluaran saat hapus
+    function updatePengeluaranHapus(jumlah) {
+      let pengeluaranHariIni = JSON.parse(localStorage.getItem("pengeluaranHariIni")) || { total: 0 };
+      let pengeluaranBulanIni = JSON.parse(localStorage.getItem("pengeluaranBulanIni")) || { total: 0 };
+      
+      pengeluaranHariIni.total -= jumlah;
+      pengeluaranBulanIni.total -= jumlah;
+      
+      // Pastikan tidak negatif
+      pengeluaranHariIni.total = Math.max(0, pengeluaranHariIni.total);
+      pengeluaranBulanIni.total = Math.max(0, pengeluaranBulanIni.total);
+      
+      localStorage.setItem("pengeluaranHariIni", JSON.stringify(pengeluaranHariIni));
+      localStorage.setItem("pengeluaranBulanIni", JSON.stringify(pengeluaranBulanIni));
+    }
+
+    // Event listener untuk filter
+    filterTipe.addEventListener("change", tampilkanRiwayat);
+    filterJenis.addEventListener("change", tampilkanRiwayat);
+
+    // Load riwayat saat halaman dimuat
+    window.addEventListener('DOMContentLoaded', tampilkanRiwayat);
+  </script>
+</body>
+</html>

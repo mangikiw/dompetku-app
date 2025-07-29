@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Dompet</title>
+
+  <!-- CSS Utama -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Font Awesome (untuk icon) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff">
+<body>
+  <div id="app-dompet">
+    <h1>Dompet</h1>
+
+    <!-- Tombol Tambah -->
+    <button id="tombolTambah" class="tambah-btn">
+      <i class="fas fa-plus"></i> Tambah Dompet
+    </button>
+
+    <!-- Form Tambah Dompet -->
+    <form id="formDompet" class="form-dompet" style="display: none;">
+      <input type="text" id="namaDompet" placeholder="Nama Dompet" required />
+      <input type="number" id="saldoDompet" placeholder="Saldo Awal" required />
+      <button type="submit">Simpan</button>
+    </form>
+
+    <!-- Tabel Daftar Dompet -->
+    <div id="dompetContainer" class="dompet-container">
+      <table id="tambahdompet">
+        <thead>
+          <tr>
+            <th>Dompet</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody id="tabel-body">
+          <!-- Baris dompet ditambahkan lewat JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+<!-- Detail Dompet -->
+<div id="detailDompet" style="display: none; margin-top: 90px; border: 1px solid #ccc; padding: 20px; border-radius: 8px;">
+  <h3 id="detailNama"></h3>
+  <p><strong>Saldo:</strong> <span id="detailSaldo"></span></p>
+  
+  <!-- Box Pengeluaran Dompet -->
+  <div style="background-color: #ffffff;">
+    <h4 style="margin-top: 0; color: #dc3545;">Pengeluaran Dompet</h4>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <span>Hari Ini:</span>
+      <span id="pengeluaranHariDompet">Rp 0</span>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+      <span>Bulan Ini:</span>
+      <span id="pengeluaranBulanDompet">Rp 0</span>
+    </div>
+  </div>
+  
+  <!-- Form Tarik Saldo -->
+  <form id="formTarikDompet" style="margin-top: 15px;">
+    <input type="number" id="jumlahTarikDompet" placeholder="Jumlah Tarik" required style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+    <input type="text" id="keteranganTarikDompet" placeholder="Keterangan (opsional)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+    <div id="buttontarkem" style="display: flex; justify-content: space-between; margin-top: 20px;">
+      <button onclick="kembaliKeDaftar()" style="background-color: #959595; color: white; margin-top: 8px; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+        <i class="fas fa-arrow-left"></i> Kembali
+      </button>
+      <button type="submit" style="background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+        <i class="fas fa-arrow-down"></i> Tarik Saldo
+      </button>
+    </div>
+  </form>
+  
+  <!-- Riwayat Dompet -->
+  <div style="margin-top: 20px;">
+    <h4 style="border-bottom: 1px solid #ccc; padding-bottom: 15px; margin-bottom: 0px;">Riwayat Transaksi Dompet</h4>
+    <div id="riwayatDompetContainer" style="max-height: 310px; overflow-y: auto;">
+      <!-- Riwayat akan dimuat di sini -->
+    </div>
+  </div>
+  
+  <br /><br />
+</div>
+
+</div>
+    <!-- Navigasi Bawah -->
+    <nav id="bottom-nav">
+      <button onclick="location.href='index.html'">
+        <i class="fas fa-bank"></i><br/>Bank Pusat
+      </button>
+      <button onclick="location.href='alokasi.html'">
+        <i class="fas fa-exchange-alt"></i><br/>Alokasi
+      </button>
+      <button onclick="location.href='dompet.html'">
+        <i class="fas fa-suitcase"></i><br/>Dompet
+      </button>
+      <button onclick="location.href='riwayat.html'">
+        <i class="fas fa-history"></i><br/>Riwayat
+      </button>
+    </nav>
+  </div>
+
+  <!-- Script JS -->
+  <script>
+    document.getElementById('tombolTambah').addEventListener('click', function () {
+  const form = document.getElementById('formDompet');
+  const table = document.getElementById('tambahdompet');
+  const isFormHidden = form.style.display === 'none' || form.style.display === '';
+
+  form.style.display = isFormHidden ? 'block' : 'none';
+  table.style.marginTop = isFormHidden ? '13px' : '90px';
+});
+
+const form = document.getElementById("formDompet");
+const inputNama = document.getElementById("namaDompet");
+const inputSaldo = document.getElementById("saldoDompet");
+const inputKeteranganTarikDompet = document.getElementById("keteranganTarikDompet");
+let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+
+// Form tarik dompet
+const formTarikDompet = document.getElementById("formTarikDompet");
+const inputJumlahTarikDompet = document.getElementById("jumlahTarikDompet");
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const nama = inputNama.value.trim();
+  const saldo = parseFloat(inputSaldo.value);
+
+  if (nama && !isNaN(saldo)) {
+    daftarDompet.push({ nama, saldo });
+    localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+
+    const tbody = document.getElementById('tabel-body');
+    const index = daftarDompet.length - 1;
+    const newRow = document.createElement('tr');
+
+    newRow.innerHTML = `
+      <td>${nama}</td>
+      <td>Rp ${parseInt(saldo).toLocaleString()}</td>
+    `;
+
+    newRow.style.cursor = "pointer";
+    // Perbaikan: Gunakan fungsi anonim untuk memastikan index yang benar
+    newRow.addEventListener("click", function () {
+      tampilkanDetailDompet(index);
+    });
+
+    tbody.appendChild(newRow);
+
+    form.reset();
+    form.style.display = 'none';
+    document.getElementById('tambahdompet').style.marginTop = '90px';
+  }
+});
+
+// Submit form tarik dompet
+formTarikDompet.addEventListener("submit", function (e) {
+  e.preventDefault();
+  
+  const index = parseInt(formTarikDompet.dataset.dompetIndex);
+  const jumlah = parseFloat(inputJumlahTarikDompet.value);
+  const keterangan = inputKeteranganTarikDompet.value.trim() || "Tarik dana";
+  
+  if (!isNaN(jumlah) && jumlah > 0) {
+    if (jumlah > daftarDompet[index].saldo) {
+      alert("Saldo tidak mencukupi!");
+      return;
+    }
+    
+    // Kurangi saldo dompet
+    daftarDompet[index].saldo -= jumlah;
+    localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+    
+    // Update tampilan saldo
+    document.getElementById("detailSaldo").textContent = "Rp " + parseInt(daftarDompet[index].saldo).toLocaleString();
+    
+    // Simpan ke riwayat transaksi
+    const detailTarik = {
+      sumber: `Dompet ${daftarDompet[index].nama}`,
+      target: "Luar Sistem",
+      indexDompet: index,
+      namaDompet: daftarDompet[index].nama
+    };
+    simpanRiwayatDompet("Penarikan", `${keterangan}`, jumlah, detailTarik);
+    
+    // Update pengeluaran dompet
+    simpanPengeluaranDompet(index, jumlah);
+    
+    alert(`Berhasil menarik Rp ${jumlah.toLocaleString()}`);
+    
+    // Reset form
+    formTarikDompet.reset();
+  }
+});
+
+window.addEventListener("DOMContentLoaded", function () {
+  const tbody = document.getElementById('tabel-body');
+  tbody.innerHTML = ""; // Kosongkan dulu
+  
+  daftarDompet.forEach((dompet, index) => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${dompet.nama}</td>
+      <td>Rp ${parseInt(dompet.saldo).toLocaleString()}</td>
+    `;
+
+    row.style.cursor = "pointer";
+    // Perbaikan: Gunakan fungsi anonim untuk memastikan index yang benar
+    row.addEventListener("click", function () {
+      tampilkanDetailDompet(index);
+    });
+
+    tbody.appendChild(row);
+  });
+});
+
+function tampilkanDetailDompet(index) {
+  const daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+  const dompet = daftarDompet[index];
+  if (!dompet) return;
+
+  document.getElementById("detailNama").textContent = dompet.nama;
+  document.getElementById("detailSaldo").textContent = "Rp " + parseInt(dompet.saldo).toLocaleString();
+  document.getElementById("formTarikDompet").dataset.dompetIndex = index;
+
+  // Update pengeluaran dompet
+  updatePengeluaranDompetDisplay(index);
+  
+  // Tampilkan riwayat dompet
+  tampilkanRiwayatDompet(index);
+
+  document.getElementById("tambahdompet").style.display = "none";
+  document.getElementById("detailDompet").style.display = "block";
+}
+// Fungsi untuk menyimpan riwayat transaksi dompet dengan detail
+function simpanRiwayatDompet(tipe, keterangan, jumlah, detail = {}) {
+  let riwayat = JSON.parse(localStorage.getItem("riwayatTransaksi")) || [];
+  
+  riwayat.push({
+    tipe: tipe,
+    keterangan: keterangan,
+    jumlah: jumlah,
+    warna: "keluar",
+    tanggal: new Date().toLocaleDateString("id-ID"),
+    detail: detail // Tambahkan detail sumber/target
+  });
+  
+  localStorage.setItem("riwayatTransaksi", JSON.stringify(riwayat));
+}
+
+// Fungsi untuk update pengeluaran dompet
+function updatePengeluaranDompetDisplay(index) {
+  // Ambil pengeluaran dompet dari localStorage
+  const keyHari = `pengeluaranHariDompet_${index}`;
+  const keyBulan = `pengeluaranBulanDompet_${index}`;
+  
+  const pengeluaranHari = JSON.parse(localStorage.getItem(keyHari)) || { total: 0 };
+  const pengeluaranBulan = JSON.parse(localStorage.getItem(keyBulan)) || { total: 0 };
+  
+  // Update tampilan
+  document.getElementById('pengeluaranHariDompet').textContent = "Rp " + parseInt(pengeluaranHari.total).toLocaleString();
+  document.getElementById('pengeluaranBulanDompet').textContent = "Rp " + parseInt(pengeluaranBulan.total).toLocaleString();
+}
+
+// Fungsi untuk simpan pengeluaran dompet
+function simpanPengeluaranDompet(index, jumlah) {
+  const keyHari = `pengeluaranHariDompet_${index}`;
+  const keyBulan = `pengeluaranBulanDompet_${index}`;
+  
+  // Simpan pengeluaran hari ini
+  let pengeluaranHari = JSON.parse(localStorage.getItem(keyHari)) || {
+    tanggal: new Date().toDateString(),
+    total: 0
+  };
+  
+  let pengeluaranBulan = JSON.parse(localStorage.getItem(keyBulan)) || {
+    bulan: new Date().getMonth(),
+    tahun: new Date().getFullYear(),
+    total: 0
+  };
+  
+  const today = new Date();
+  
+  // Reset jika beda hari
+  if (pengeluaranHari.tanggal !== today.toDateString()) {
+    pengeluaranHari = {
+      tanggal: today.toDateString(),
+      total: 0
+    };
+  }
+  
+  // Reset jika beda bulan
+  if (pengeluaranBulan.bulan !== today.getMonth() || pengeluaranBulan.tahun !== today.getFullYear()) {
+    pengeluaranBulan = {
+      bulan: today.getMonth(),
+      tahun: today.getFullYear(),
+      total: 0
+    };
+  }
+  
+  // Tambahkan pengeluaran
+  pengeluaranHari.total += jumlah;
+  pengeluaranBulan.total += jumlah;
+  
+  // Simpan kembali
+  localStorage.setItem(keyHari, JSON.stringify(pengeluaranHari));
+  localStorage.setItem(keyBulan, JSON.stringify(pengeluaranBulan));
+  
+  // Update tampilan
+  updatePengeluaranDompetDisplay(index);
+}
+function kembaliKeDaftar() {
+  // Sembunyikan detail dompet
+  document.getElementById("detailDompet").style.display = "none";
+  
+  // Tampilkan daftar dompet
+  document.getElementById("tambahdompet").style.display = "table";
+  
+  // Atau jika pakai div:
+  // document.getElementById("dompetContainer").style.display = "block";
+}
+// Fungsi untuk tampilkan riwayat dompet
+function tampilkanRiwayatDompet(index) {
+  const riwayatContainer = document.getElementById('riwayatDompetContainer');
+  riwayatContainer.innerHTML = '';
+  
+  // Ambil semua riwayat transaksi
+  const semuaRiwayat = JSON.parse(localStorage.getItem("riwayatTransaksi")) || [];
+  
+  // Filter riwayat yang berkaitan dengan dompet ini
+  const riwayatDompet = semuaRiwayat.filter(riwayat => {
+    const detail = riwayat.detail || {};
+    // Cari riwayat yang sumber/target adalah dompet ini
+    return (detail.indexDompet === index) || 
+           (riwayat.keterangan && riwayat.keterangan.includes(`Dompet ${daftarDompet[index]?.nama}`));
+  });
+  
+  if (riwayatDompet.length === 0) {
+    riwayatContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Tidak ada riwayat transaksi</p>';
+    return;
+  }
+  
+  // Tampilkan riwayat (dari yang terbaru)
+  riwayatDompet.reverse().forEach(riwayat => {
+    const item = document.createElement('div');
+    item.style.cssText = `
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+      font-size: 14px;
+    `;
+    
+    // Tentukan warna berdasarkan tipe
+    let warnaJumlah = '#666';
+    if (riwayat.warna === 'masuk') warnaJumlah = '#28a745';
+    else if (riwayat.warna === 'keluar') warnaJumlah = '#dc3545';
+    
+    item.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <strong>${riwayat.tipe}</strong>
+        <span style="color: ${warnaJumlah}; font-weight: bold;">Rp ${parseInt(riwayat.jumlah).toLocaleString()}</span>
+      </div>
+      <div style="margin-bottom: 5px;">${riwayat.keterangan}</div>
+      <div style="font-size: 12px; color: #999;">${riwayat.tanggal}</div>
+    `;
+    
+    riwayatContainer.appendChild(item);
+  });
+}
+  </script>
+  <script>
+  // Register service worker (opsional)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(function(error) {
+          console.log('SW registration failed:', error);
+        });
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Bank Pusat</title>
+
+  <!-- Font Awesome -->
+ <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff">
+<body>
+  <div id="app-bank">
+    <h1>Bank Pusat</h1>
+
+    <!-- Tombol Tambah -->
+    <button id="tambahDanaBank" class="tambahDanaBank-btn">
+      <i class="fas fa-plus"></i> Tambah Dana
+    </button>
+
+    <!-- Form Tambah Dana -->
+    <form id="formDanaBank" class="form-dompet" style="display: none;">
+      <input type="number" id="jumlahDana" placeholder="Jumlah" required />
+      <input type="text" id="keteranganDana" placeholder="Keterangan" required />
+      <button type="submit">Tambah</button>
+    </form>
+
+    <!-- Info Box -->
+<div class="info-box">
+  <div class="info-row">
+    <span class="label">Saldo Bank</span>
+    <span class="value" id="saldoBank">Rp 0</span>
+    <div class="bank-actions">
+      <button id="btn-alokasi">
+        <i class="fas fa-share"></i> Alokasi
+      </button>
+      <button id="btn-tarik">
+        <i class="fas fa-arrow-down"></i> Tarik
+      </button>
+    </div> 
+  </div>
+  
+  <!-- Form Alokasi Bank -->
+  <form id="formAlokasiBank" class="form-Alokasi-Bank" style="display: none;">
+    <select id="dropdownDompet" required>
+      <option value="">-- Pilih Dompet --</option>
+      <!-- Diisi via JS -->
+    </select>
+    <input type="number" id="jumlahAlokasi" placeholder="Jumlah" required />
+    <button type="submit">Simpan</button>
+  </form>
+  
+<!-- Form Tarik Bank - Hanya Jumlah dan Keterangan -->
+<form id="formTarikBank" class="form-Tarik-Bank" style="display: none;">
+  <input type="number" id="jumlahTarik" placeholder="Jumlah" required />
+  <input type="text" id="keteranganTarik" placeholder="Keterangan (opsional)" />
+  <button type="submit">Tarik</button>
+</form>
+  
+ <div class="info-row">
+  <span class="label">Pengeluaran Hari Ini</span>
+  <span class="value" id="pengeluaranHari">Rp 0</span>
+</div>
+<div class="info-row">
+  <span class="label">Pengeluaran Bulan Ini</span>
+  <span class="value" id="pengeluaranBulan">Rp 0</span>
+</div>
+</div>
+
+    <!-- Navigasi -->
+    <nav id="bottom-nav">
+      <button onclick="location.href='index.html'"><i class="fas fa-bank"></i><br/>Bank Pusat</button>
+      <button onclick="location.href='alokasi.html'"><i class="fas fa-exchange-alt"></i><br/>Alokasi</button>
+      <button onclick="location.href='dompet.html'"><i class="fas fa-suitcase"></i><br/>Dompet</button>
+      <button onclick="location.href='riwayat.html'"><i class="fas fa-history"></i><br/>Riwayat</button>
+    </nav>
+  </div>
+
+  <!-- Script -->
+<script>
+ // Fungsi untuk menyimpan riwayat transaksi dengan detail sumber/target
+function simpanRiwayat(tipe, keterangan, jumlah, warna, detail = {}) {
+  let riwayat = JSON.parse(localStorage.getItem("riwayatTransaksi")) || [];
+  
+  const dataRiwayat = {
+    tipe: tipe,
+    keterangan: keterangan,
+    jumlah: jumlah,
+    warna: warna,
+    tanggal: new Date().toLocaleDateString("id-ID"),
+    detail: detail // Tambahkan detail sumber/target
+  };
+  
+  riwayat.push(dataRiwayat);
+  localStorage.setItem("riwayatTransaksi", JSON.stringify(riwayat));
+}
+// Fungsi untuk update pengeluaran
+function updatePengeluaran(jumlah) {
+  // Simpan pengeluaran hari ini
+  let pengeluaranHariIni = JSON.parse(localStorage.getItem("pengeluaranHariIni")) || {
+    tanggal: new Date().toDateString(),
+    total: 0
+  };
+  
+  let pengeluaranBulanIni = JSON.parse(localStorage.getItem("pengeluaranBulanIni")) || {
+    bulan: new Date().getMonth(),
+    tahun: new Date().getFullYear(),
+    total: 0
+  };
+  
+  const today = new Date();
+  
+  // Reset jika beda hari
+  if (pengeluaranHariIni.tanggal !== today.toDateString()) {
+    pengeluaranHariIni = {
+      tanggal: today.toDateString(),
+      total: 0
+    };
+  }
+  
+  // Reset jika beda bulan
+  if (pengeluaranBulanIni.bulan !== today.getMonth() || pengeluaranBulanIni.tahun !== today.getFullYear()) {
+    pengeluaranBulanIni = {
+      bulan: today.getMonth(),
+      tahun: today.getFullYear(),
+      total: 0
+    };
+  }
+  
+  // Tambahkan pengeluaran
+  pengeluaranHariIni.total += jumlah;
+  pengeluaranBulanIni.total += jumlah;
+  
+  // Simpan kembali
+  localStorage.setItem("pengeluaranHariIni", JSON.stringify(pengeluaranHariIni));
+  localStorage.setItem("pengeluaranBulanIni", JSON.stringify(pengeluaranBulanIni));
+  
+  // Update tampilan dengan ID
+  document.getElementById('pengeluaranHari').textContent = "Rp " + parseInt(pengeluaranHariIni.total).toLocaleString();
+  document.getElementById('pengeluaranBulan').textContent = "Rp " + parseInt(pengeluaranBulanIni.total).toLocaleString();
+}
+
+const inputKeteranganTarik = document.getElementById("keteranganTarik");
+const tombol = document.getElementById('tambahDanaBank');
+const formDanaBank = document.getElementById('formDanaBank');
+const inputKeterangan = document.getElementById("keteranganDana");
+const inputSaldo = document.getElementById("jumlahDana");
+const saldoBankEl = document.getElementById("saldoBank");
+const infoBox = document.querySelector('.info-box');
+
+let dataBank = JSON.parse(localStorage.getItem("dataBank")) || [];
+let totalSaldo = dataBank.reduce((acc, curr) => acc + curr.dana, 0);
+saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+
+// Load pengeluaran saat halaman dimuat
+window.addEventListener('DOMContentLoaded', () => {
+  // Ambil data pengeluaran dari localStorage
+  const pengeluaranHariIni = JSON.parse(localStorage.getItem("pengeluaranHariIni")) || { total: 0 };
+  const pengeluaranBulanIni = JSON.parse(localStorage.getItem("pengeluaranBulanIni")) || { total: 0 };
+  
+  // Update tampilan pengeluaran dengan ID
+  document.getElementById('pengeluaranHari').textContent = "Rp " + parseInt(pengeluaranHariIni.total).toLocaleString();
+  document.getElementById('pengeluaranBulan').textContent = "Rp " + parseInt(pengeluaranBulanIni.total).toLocaleString();
+  
+  // Update saldo bank
+  saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+});
+
+// Tombol toggle form dan margin info-box
+tombol.addEventListener('click', () => {
+  const isHidden = formDanaBank.style.display === 'none' || formDanaBank.style.display === '';
+  formDanaBank.style.display = isHidden ? 'block' : 'none';
+  infoBox.style.marginTop = isHidden ? '20px' : '90px';
+});
+
+// Submit form tambah dana
+formDanaBank.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const keterangan = inputKeterangan.value.trim();
+  const dana = parseFloat(inputSaldo.value);
+
+  if (keterangan && !isNaN(dana)) {
+    dataBank.push({ keterangan, dana });
+    localStorage.setItem("dataBank", JSON.stringify(dataBank));
+
+    totalSaldo += dana;
+    saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+
+    // Simpan ke riwayat (ini pemasukan, bukan pengeluaran)
+    simpanRiwayat("Pemasukan", keterangan, dana, "masuk");
+    formDanaBank.reset();
+    formDanaBank.style.display = "none";
+    infoBox.style.marginTop = "90px";
+  }
+});
+
+// Fungsi toggle form dompet (form lain)
+function toggleForm() {
+  const formDompet = document.getElementById('formDompet');
+  const isVisible = formDompet.style.display === 'block';
+
+  formDompet.style.display = isVisible ? 'none' : 'block';
+  infoBox.style.marginTop = isVisible ? '90px' : '20px';
+}
+
+// Button Alokasi
+const formAlokasi = document.getElementById("formAlokasiBank");
+const dropdownDompet = document.getElementById("dropdownDompet");
+const inputJumlahAlokasi = document.getElementById("jumlahAlokasi");
+
+// Button Tarik
+const formTarik = document.getElementById("formTarikBank");
+const inputJumlahTarik = document.getElementById("jumlahTarik");
+
+// Tampilkan form alokasi - sembunyikan form tarik
+document.getElementById("btn-alokasi").addEventListener("click", function () {
+  // Sembunyikan form tarik dulu
+  formTarik.style.display = 'none';
+  
+  // Toggle form alokasi
+  if (formAlokasi.style.display === 'none' || formAlokasi.style.display === '') {
+    formAlokasi.style.display = 'block';
+    muatDropdownDompet();
+  } else {
+    formAlokasi.style.display = 'none';
+  }
+});
+
+// Tampilkan form tarik - sembunyikan form alokasi
+document.getElementById("btn-tarik").addEventListener("click", function () {
+  // Sembunyikan form alokasi dulu
+  formAlokasi.style.display = 'none';
+  
+  // Toggle form tarik
+  if (formTarik.style.display === 'none' || formTarik.style.display === '') {
+    formTarik.style.display = 'block';
+  } else {
+    formTarik.style.display = 'none';
+  }
+});
+
+// Fungsi untuk isi dropdown dompet dari localStorage
+function muatDropdownDompet() {
+  dropdownDompet.innerHTML = `<option value="">-- Pilih Dompet --</option>`;
+  const daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+
+  daftarDompet.forEach((dompet, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${dompet.nama} - Rp ${parseInt(dompet.saldo).toLocaleString()}`;
+    dropdownDompet.appendChild(option);
+  });
+}
+
+// Di submit form alokasi
+formAlokasi.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const indexDompet = parseInt(dropdownDompet.value);
+  const jumlah = parseFloat(inputJumlahAlokasi.value);
+  let daftarDompet = JSON.parse(localStorage.getItem("daftarDompet")) || [];
+
+  if (!isNaN(indexDompet) && !isNaN(jumlah)) {
+    if (jumlah > totalSaldo) {
+      alert("Saldo bank tidak mencukupi!");
+      return;
+    }
+
+    // Kurangi dari bank
+    totalSaldo -= jumlah;
+    saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+
+    // Simpan ke dompet terpilih
+    daftarDompet[indexDompet].saldo += jumlah;
+    localStorage.setItem("daftarDompet", JSON.stringify(daftarDompet));
+
+    // Update saldo bank
+    dataBank = [{ keterangan: "Alokasi", dana: totalSaldo }];
+    localStorage.setItem("dataBank", JSON.stringify(dataBank));
+
+    // Simpan ke riwayat dengan detail sumber/target
+    const namaDompet = daftarDompet[indexDompet].nama;
+    const detailAlokasi = {
+      sumber: "Bank Pusat",
+      target: `Dompet ${namaDompet}`,
+      indexDompet: indexDompet,
+      namaDompet: namaDompet
+    };
+    simpanRiwayat("Alokasi", `Ke dompet ${namaDompet}`, jumlah, "alokasi", detailAlokasi);
+
+    alert("Berhasil dialokasikan ke dompet: " + namaDompet);
+
+    // Reset form
+    formAlokasi.reset();
+    formAlokasi.style.display = "none";
+  }
+});
+
+// Di submit form tarik
+formTarik.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const jumlah = parseFloat(inputJumlahTarik.value);
+  const keterangan = inputKeteranganTarik.value.trim() || "Tarik dana";
+
+  if (!isNaN(jumlah)) {
+    if (jumlah > totalSaldo) {
+      alert("Saldo bank tidak mencukupi!");
+      return;
+    }
+
+    // Kurangi dari bank
+    totalSaldo -= jumlah;
+    saldoBankEl.textContent = "Rp " + totalSaldo.toLocaleString();
+
+    // Update saldo bank
+    dataBank = [{ keterangan: "Tarik", dana: totalSaldo }];
+    localStorage.setItem("dataBank", JSON.stringify(dataBank));
+
+    // Simpan ke riwayat dengan detail
+    const detailTarik = {
+      sumber: "Bank Pusat",
+      target: "Luar Sistem"
+    };
+    simpanRiwayat("Penarikan", keterangan, jumlah, "keluar", detailTarik);
+
+    // UPDATE PENGELUARAN
+    updatePengeluaran(jumlah);
+
+    alert("Berhasil menarik dana: Rp " + jumlah.toLocaleString());
+
+    // Reset form
+    formTarik.reset();
+    formTarik.style.display = "none";
+  }
+});
+</script>
+<script>
+  // Register service worker (opsional)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(function(error) {
+          console.log('SW registration failed:', error);
+        });
+    });
+  }
+</script>
+</body>
+</html>
